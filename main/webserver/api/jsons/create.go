@@ -9,5 +9,6 @@ import (
 func getJsons(w http.ResponseWriter, r *http.Request) {
 	ctx, span := config.TracerS(r.Context(), "getJsons", "jsons")
 	defer span.End()
-	slog.WarnContext(ctx, "getJsons")
+	slog.DebugContext(ctx, "getJsons")
+	//センサーデータをJSON形式に変換してデータを返す
 }

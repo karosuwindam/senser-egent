@@ -10,6 +10,7 @@ import (
 
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
@@ -219,5 +220,11 @@ func TracerS(ctx context.Context,
 func (t *TraceSet) End() {
 	if t.Otel != nil {
 		t.Otel.End()
+	}
+}
+
+func (t *TraceSet) SetAttributes(kv ...attribute.KeyValue) {
+	if t.Otel != nil {
+		t.Otel.SetAttributes(kv...)
 	}
 }

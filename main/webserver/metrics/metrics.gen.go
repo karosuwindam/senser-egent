@@ -10,5 +10,6 @@ func Init(route string, mux *http.ServeMux) error {
 		route = ""
 	}
 	common.TraceHandleFunc(mux, "GET "+route, getMetrics)
+
 	return nil
 }

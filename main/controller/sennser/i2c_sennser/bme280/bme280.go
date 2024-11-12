@@ -3,7 +3,10 @@ package bme280
 import (
 	"context"
 	"log/slog"
+	"senseregent/config"
 	"senseregent/controller/sennser/i2c_sennser/common"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
 const (
@@ -56,6 +59,9 @@ type bme280_cal struct {
 }
 
 func up(ctx context.Context) {
+	ctx, span := config.TracerS(ctx, "up", "Bme280_up")
+	defer span.End()
+
 	osrs_t := 1
 	osrs_p := 1
 	osrs_h := 1
@@ -90,6 +96,9 @@ func up(ctx context.Context) {
 }
 
 func down(ctx context.Context) {
+	ctx, span := config.TracerS(ctx, "down", "Bme280_down")
+	defer span.End()
+
 	commands := []byte{
 		BME280_CTRL_HUM,
 		BME280_CTRL_MEAS,
@@ -113,6 +122,8 @@ func down(ctx context.Context) {
 }
 
 func readICIDCheck(ctx context.Context) bool {
+	ctx, span := config.TracerS(ctx, "readICDCheck", "Bme280_readICIDCheck")
+	defer span.End()
 
 	ctx = common.WriteI2cContext(ctx, common.I2c{
 		Command:  BME280_ID,
@@ -129,6 +140,9 @@ func readICIDCheck(ctx context.Context) bool {
 }
 
 func rawRead(ctx context.Context) (int, int, int) {
+	ctx, span := config.TracerS(ctx, "rawRead", "Bme280_rawRead")
+	defer span.End()
+
 	ctx = common.WriteI2cContext(ctx, common.I2c{
 		Command:  BME280_PRESS_MSB,
 		ReadSize: 8,
@@ -154,6 +168,9 @@ func rawRead(ctx context.Context) (int, int, int) {
 }
 
 func calibRead(ctx context.Context) bme280_cal {
+	ctx, span := config.TracerS(ctx, "calibRead", "Bme280_calibRead")
+	defer span.End()
+
 	var out bme280_cal
 
 	var calib []int
@@ -281,6 +298,9 @@ func (t *bme280_cal) CalibHum(b_hum int, t_fine float64) float64 {
 //
 // c_press, c_tmp, c_hum
 func readSenserData(ctx context.Context, calib bme280_cal) (float64, float64, float64) {
+	ctx, span := config.TracerS(ctx, "readSenserData", "Bme280_readSenserData")
+	defer span.End()
+
 	press, temp, hum := rawRead(ctx)
 	if press == -1 && temp == -1 && hum == -1 {
 		return -1, -1, -1
@@ -288,6 +308,13 @@ func readSenserData(ctx context.Context, calib bme280_cal) (float64, float64, fl
 	c_tmp, t_fine := calib.CalibTemp(temp)
 	c_press := calib.CalibPress(press, t_fine)
 	c_hum := calib.CalibHum(hum, t_fine)
+
+	span.SetAttributes( //
+		attribute.Float64("c_tmp", c_tmp),
+		attribute.Float64("c_press", c_press),
+		attribute.Float64("c_hum", c_hum),
+	)
+
 	if c_hum <= 0 || c_tmp < -40 || c_tmp > 85 {
 		return -1, -1, -1
 	}
