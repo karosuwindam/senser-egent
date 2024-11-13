@@ -45,6 +45,61 @@ const (
 	BME280_ID_DATA byte = 0x60
 )
 
+type osrs_t int //Temperature oversampling
+type osrs_p int //Pressure oversampling
+type mode int   //register settings mode
+
+const (
+	CtrMeasReg_t_SKIP            osrs_t = 0
+	CtrMeasReg_t_Oversampling_1  osrs_t = 1
+	CtrMeasReg_t_Oversampling_2  osrs_t = 2
+	CtrMeasReg_t_Oversampling_4  osrs_t = 3
+	CtrMeasReg_t_Oversampling_8  osrs_t = 4
+	CtrMeasReg_t_Oversampling_16 osrs_t = 5
+	CtrMeasReg_p_SKIP            osrs_p = 0
+	CtrMeasReg_p_Oversampling_1  osrs_p = 1
+	CtrMeasReg_p_Oversampling_2  osrs_p = 2
+	CtrMeasReg_p_Oversampling_4  osrs_p = 3
+	CtrMeasReg_p_Oversampling_8  osrs_p = 4
+	CtrMeasReg_p_Oversampling_16 osrs_p = 5
+	CtrMeasReg_Sleep             mode   = 0
+	CtrMeasReg_Forced            mode   = 1
+	CtrMeasReg_Normal            mode   = 3
+)
+
+type t_sb int     //Controls inactive duration stanbay[ms]
+type filter int   //] Filter coefficient
+type spi3w_en int //Enables 3-wire SPI interface when set to ‘1’.
+
+const (
+	CONFIG_t_sb_0_5   t_sb     = 0 //Forced to Sleep 0.5ms
+	CONFIG_t_sb_62_5  t_sb     = 1 //Forced to Sleep 62.5ms
+	CONFIG_t_sb_125   t_sb     = 2 //Forced to Sleep 125ms
+	CONFIG_t_sb_250   t_sb     = 3 //Forced to Sleep 250ms
+	CONFIG_t_sb_500   t_sb     = 4 //Forced to Sleep 500ms
+	CONFIG_t_sb_1000  t_sb     = 5 //Forced to Sleep 1000ms
+	CONFIG_t_sb_10    t_sb     = 6 //Forced to Sleep 10ms
+	CONFIG_t_sb_20    t_sb     = 7 //Forced to Sleep 20ms
+	CONFIG_FILTER_OFF filter   = 0
+	CONFIG_FILTER_2   filter   = 1
+	CONFIG_FILTER_4   filter   = 2
+	CONFIG_FILTER_8   filter   = 3
+	CONFIG_FILTER_16  filter   = 4
+	CONFIG_SPI_3w_OFF spi3w_en = 0
+	CONFIG_SPI_3w_ON  spi3w_en = 1
+)
+
+type osrs_h int //Humidity oversampling
+
+const (
+	CTRL_HUM_SKIP            osrs_h = 0
+	CTRL_HUM_Oversampling_1  osrs_h = 1
+	CTRL_HUM_Oversampling_2  osrs_h = 2
+	CTRL_HUM_Oversampling_4  osrs_h = 3
+	CTRL_HUM_Oversampling_8  osrs_h = 4
+	CTRL_HUM_Oversampling_16 osrs_h = 5
+)
+
 type Bme280_Vaule struct {
 	Press float64
 	Temp  float64
@@ -58,20 +113,59 @@ type bme280_cal struct {
 	timefine float64
 }
 
+func ctrlMeasReg_set(v ...interface{}) byte {
+	var regdata []int = make([]int, 3)
+	for _, value := range v {
+		switch value.(type) {
+		case osrs_t:
+			tmp, _ := value.(osrs_t)
+			regdata[0] = int(tmp)
+		case osrs_p:
+			tmp, _ := value.(osrs_p)
+			regdata[1] = int(tmp)
+		case mode:
+			tmp, _ := value.(mode)
+			regdata[2] = int(tmp)
+		}
+	}
+	return byte((regdata[0] << 5) | (regdata[1] << 2) | regdata[2])
+}
+
+func config_reg_set(v ...interface{}) byte {
+	var regdata []int = make([]int, 3)
+	for _, value := range v {
+		switch value.(type) {
+		case t_sb:
+			tmp, _ := value.(t_sb)
+			regdata[0] = int(tmp)
+		case filter:
+			tmp, _ := value.(filter)
+			regdata[1] = int(tmp)
+		case spi3w_en:
+			tmp, _ := value.(spi3w_en)
+			regdata[2] = int(tmp)
+		}
+	}
+	return byte((regdata[0] << 5) | (regdata[1] << 2) | regdata[2])
+}
+
+func ctrl_hum_reg_set(v osrs_h) byte {
+	return byte(v)
+}
+
 func up(ctx context.Context) {
 	ctx, span := config.TracerS(ctx, "up", "Bme280_up")
 	defer span.End()
-
-	osrs_t := 1
-	osrs_p := 1
-	osrs_h := 1
-	mode := 3
-	t_sb := 5
-	filter := 0
-	spi3w_en := 0
-	ctrl_meas_reg := byte((osrs_t << 5) | (osrs_p << 2) | mode)
-	config_reg := byte((t_sb << 5) | (filter << 2) | spi3w_en)
-	ctrl_hum_reg := byte(osrs_h)
+	slog.DebugContext(ctx, "BME280 up")
+	ctrl_meas_reg := ctrlMeasReg_set(
+		CtrMeasReg_p_Oversampling_1, CtrMeasReg_t_Oversampling_1, CtrMeasReg_Normal,
+	)
+	config_reg := config_reg_set(
+		CONFIG_FILTER_OFF, CONFIG_t_sb_1000, CONFIG_SPI_3w_OFF,
+	)
+	ctrl_hum_reg := ctrl_hum_reg_set(
+		CTRL_HUM_Oversampling_1,
+	)
 
 	commands := []byte{
 		BME280_CTRL_HUM,
@@ -98,16 +192,26 @@ func up(ctx context.Context) {
 func down(ctx context.Context) {
 	ctx, span := config.TracerS(ctx, "down", "Bme280_down")
 	defer span.End()
+	slog.DebugContext(ctx, "BME280 down")
 
+	ctrl_meas_reg := ctrlMeasReg_set(
+		CtrMeasReg_p_SKIP, CtrMeasReg_t_SKIP, CtrMeasReg_Sleep,
+	)
+	config_reg := config_reg_set(
+		CONFIG_FILTER_OFF, CONFIG_t_sb_0_5, CONFIG_SPI_3w_OFF,
+	)
+	ctrl_hum_reg := ctrl_hum_reg_set(
+		CTRL_HUM_SKIP,
+	)
 	commands := []byte{
 		BME280_CTRL_HUM,
 		BME280_CTRL_MEAS,
 		BME280_CONFIG,
 	}
 	datas := []byte{
-		0x0,
-		0x0,
-		0x0,
+		ctrl_hum_reg,
+		ctrl_meas_reg,
+		config_reg,
 	}
 	for i, command := range commands {
 		ctx = common.WriteI2cContext(ctx, common.I2c{
@@ -124,6 +228,7 @@ func down(ctx context.Context) {
 func readICIDCheck(ctx context.Context) bool {
 	ctx, span := config.TracerS(ctx, "readICDCheck", "Bme280_readICIDCheck")
 	defer span.End()
+	slog.DebugContext(ctx, "BME280 readICIDCheck")
 
 	ctx = common.WriteI2cContext(ctx, common.I2c{
 		Command:  BME280_ID,
@@ -135,13 +240,44 @@ func readICIDCheck(ctx context.Context) bool {
 	} else if buf[0] != BME280_ID_DATA {
 		slog.WarnContext(ctx, "BM280 Test header error data", "ID", buf[0])
 		return false
+	} else {
+		slog.DebugContext(ctx, "BME280 Test Read Bme280 ID", "ID", buf[0])
 	}
 	return true
+}
+
+func readStatus(ctx context.Context) mode {
+	ctx, span := config.TracerS(ctx, "readStatus", "Bme280_readStatus")
+	defer span.End()
+	slog.DebugContext(ctx, "BME280 readStatus")
+
+	ctx = common.WriteI2cContext(ctx, common.I2c{
+		Command:  BME280_CTRL_MEAS,
+		ReadSize: 1,
+	})
+	if buf, err := i2c.ReadByte(ctx); err != nil {
+		slog.ErrorContext(ctx, "BM280 readStatus Read Error", "err", err)
+		return CtrMeasReg_Sleep
+	} else {
+		switch buf[0] & 0x03 {
+		case 0x0:
+			return CtrMeasReg_Sleep
+		case 0x1:
+			return CtrMeasReg_Forced
+		case 0x2:
+			return CtrMeasReg_Forced
+		case 0x3:
+			return CtrMeasReg_Normal
+		}
+	}
+	return CtrMeasReg_Sleep
+
 }
 
 func rawRead(ctx context.Context) (int, int, int) {
 	ctx, span := config.TracerS(ctx, "rawRead", "Bme280_rawRead")
 	defer span.End()
+	slog.DebugContext(ctx, "BME280 rawRead")
 
 	ctx = common.WriteI2cContext(ctx, common.I2c{
 		Command:  BME280_PRESS_MSB,
@@ -163,13 +299,14 @@ func rawRead(ctx context.Context) (int, int, int) {
 	press := int(buf[0])<<12 | int(buf[1])<<4 | int(buf[2])>>4
 	temp := int(buf[3])<<12 | int(buf[4])<<4 | int(buf[5])>>4
 	hum := int(buf[6])<<8 | int(buf[7])
-	slog.DebugContext(ctx, "BME280 read data", "press", press, "temp", temp, "hum", hum)
+	slog.DebugContext(ctx, "BME280 read raw data", "press", press, "temp", temp, "hum", hum)
 	return press, temp, hum
 }
 
 func calibRead(ctx context.Context) bme280_cal {
 	ctx, span := config.TracerS(ctx, "calibRead", "Bme280_calibRead")
 	defer span.End()
+	slog.DebugContext(ctx, "BME280 calibRead")
 
 	var out bme280_cal
 
@@ -300,6 +437,7 @@ func (t *bme280_cal) CalibHum(b_hum int, t_fine float64) float64 {
 func readSenserData(ctx context.Context, calib bme280_cal) (float64, float64, float64) {
 	ctx, span := config.TracerS(ctx, "readSenserData", "Bme280_readSenserData")
 	defer span.End()
+	slog.DebugContext(ctx, "BME280 readSenserData")
 
 	press, temp, hum := rawRead(ctx)
 	if press == -1 && temp == -1 && hum == -1 {
@@ -318,6 +456,7 @@ func readSenserData(ctx context.Context, calib bme280_cal) (float64, float64, fl
 	if c_hum <= 0 || c_tmp < -40 || c_tmp > 85 {
 		return -1, -1, -1
 	}
+	slog.DebugContext(ctx, "BME280 readSenserData", "press", c_press, "temp", c_tmp, "hum", c_hum)
 	return c_press, c_tmp, c_hum
 
 }
