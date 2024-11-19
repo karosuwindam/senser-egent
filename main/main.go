@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"senseregent/config"
+	"senseregent/controller"
 	"senseregent/webserver"
 	"syscall"
 )
@@ -14,6 +15,9 @@ func init() {
 		panic(err)
 	}
 	if err := webserver.Init(); err != nil {
+		panic(err)
+	}
+	if err := controller.Init(); err != nil {
 		panic(err)
 	}
 
@@ -27,6 +31,12 @@ func main() {
 
 	config.TracerStart(config.TraData.GrpcURL, config.TraData.ServiceName, ctxmain)
 	defer config.TracerStop(ctxmain)
+	ctxController, canncelController := context.WithCancel(ctx)
+	go func(ctx context.Context) {
+		if err := controller.Run(ctx); err != nil {
+			panic(err)
+		}
+	}(ctxController)
 	ctxWeb, canncelweb := context.WithCancel(ctx)
 	go func(ctx context.Context) {
 		if err := webserver.Start(ctx); err != nil {
@@ -36,7 +46,9 @@ func main() {
 
 	<-ctxmain.Done()
 
-	webserver.Stop(ctxWeb)
+	webserver.Stop(context.Background())
+	controller.Stop(context.Background())
+	canncelController()
 
 	canncelweb()
 

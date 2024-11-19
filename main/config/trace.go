@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 	"time"
 
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
@@ -20,7 +20,7 @@ import (
 	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/sdk/metric"
 
-	"go.opentelemetry.io/otel/sdk/log"
+	sdklog "go.opentelemetry.io/otel/sdk/log"
 
 	slogmulti "github.com/samber/slog-multi"
 	"go.opentelemetry.io/otel/propagation"
@@ -96,18 +96,25 @@ func initMeterProvider(ctx context.Context, res *resource.Resource, v interface{
 	return meterProvider, nil
 }
 
-func initLoggerProvider(ctx context.Context, res *resource.Resource, url string) (*log.LoggerProvider, error) {
-	logExporter, err := otlploghttp.New(ctx,
-		otlploghttp.WithEndpointURL(url),
-		// otlploghttp.WithEndpoint(url),
-	)
+func initLoggerProvider(ctx context.Context, res *resource.Resource, v interface{}) (*sdklog.LoggerProvider, error) {
+	var logExporter sdklog.Exporter
+	var err error
+	if conn, ok := v.(*grpc.ClientConn); ok {
+		logExporter, err = otlploggrpc.New(ctx,
+			otlploggrpc.WithGRPCConn(conn),
+		)
+	} else if url, ok := v.(string); ok {
+		logExporter, err = otlploghttp.New(ctx,
+			otlploghttp.WithEndpointURL(url),
+		)
+	}
 	if err != nil {
 		return nil, err
 	}
 
-	loggerProvider := log.NewLoggerProvider(
-		log.WithResource(res),
-		log.WithProcessor(log.NewBatchProcessor(logExporter)),
+	loggerProvider := sdklog.NewLoggerProvider(
+		sdklog.WithResource(res),
+		sdklog.WithProcessor(sdklog.NewBatchProcessor(logExporter)),
 	)
 	return loggerProvider, nil
 }
@@ -148,6 +155,12 @@ func TracerStart(urldata, serviceName string, ctx context.Context) error {
 		} else {
 			shutdownFuncs = append(shutdownFuncs, shutdownMeter.Shutdown)
 		}
+		if shutdownlogger, err := initLoggerProvider(ctx, res, "http://"+TraData.HttpURL+"/v1/logs"); err != nil {
+			return err
+		} else {
+			global.SetLoggerProvider(shutdownlogger)
+			shutdownFuncs = append(shutdownFuncs, shutdownlogger.Shutdown)
+		}
 	} else {
 		if shutdownTracer, err := initTracerProvider(ctx, res, TraData.HttpURL); err != nil {
 			return err
@@ -159,16 +172,16 @@ func TracerStart(urldata, serviceName string, ctx context.Context) error {
 		} else {
 			shutdownFuncs = append(shutdownFuncs, shutdownMeter.Shutdown)
 		}
-	}
-	if shutdownlogger, err := initLoggerProvider(ctx, res, "http://"+TraData.HttpURL+"/v1/logs"); err != nil {
-		return err
-	} else {
-		global.SetLoggerProvider(shutdownlogger)
-		shutdownFuncs = append(shutdownFuncs, shutdownlogger.Shutdown)
+		if shutdownlogger, err := initLoggerProvider(ctx, res, "http://"+TraData.HttpURL+"/v1/logs"); err != nil {
+			return err
+		} else {
+			global.SetLoggerProvider(shutdownlogger)
+			shutdownFuncs = append(shutdownFuncs, shutdownlogger.Shutdown)
+		}
 	}
 	logger := slog.New(
 		slogmulti.Fanout(
-			slog.NewTextHandler(os.Stdout, nil),
+			handlerConfig(slog.LevelInfo),
 			otelslog.NewHandler(serviceName),
 		),
 	)

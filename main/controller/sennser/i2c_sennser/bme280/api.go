@@ -3,6 +3,7 @@ package bme280
 import (
 	"context"
 	"fmt"
+	"senseregent/controller/sennser/i2c_sennser/common"
 	"sync"
 )
 
@@ -15,7 +16,12 @@ type API struct {
 }
 
 func APIInit() *API {
+	i2c = common.Init(BME280, I2C_BUS)
 	return &API{}
+}
+
+func (api *API) Test(ctx context.Context) bool {
+	return readICIDCheck(ctx)
 }
 
 func (api *API) Up(ctx context.Context) {
@@ -45,7 +51,7 @@ func (api *API) ReadData(ctx context.Context) error {
 		return fmt.Errorf("BME280 Sleep Mode")
 	}
 	if len(api.calib.hum) == 0 {
-		api.CalibRead(ctx)
+		api.calib = calibRead(ctx)
 	}
 	api.Press, api.Tmp, api.Hum = readSenserData(ctx, api.calib)
 	return nil

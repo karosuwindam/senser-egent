@@ -12,8 +12,8 @@ type api struct {
 }
 
 var v1apis = []api{
-	{"json", jsons.Init},
-	{"reset", reset.Init},
+	{"/json", jsons.Init},
+	{"/reset", reset.Init},
 }
 
 func Init(mux *http.ServeMux) error {

@@ -16,8 +16,8 @@ type TracerData struct {
 	GrpcOn      bool   `env:"TRACER_GRPC_ON" envDefault:"true"`
 	GrpcURL     string `env:"TRACER_GRPC_URL" envDefault:"localhost:4317"`
 	HttpURL     string `env:"TRACER_HTTP_URL" envDefault:"localhost:4318"`
-	ServiceName string `env:"TRACER_SERVICE_NAME" envDefault:"senser-egent"`
-	TracerUse   bool   `env:"TRACER_ON" envDefault:"true"`
+	ServiceName string `env:"TRACER_SERVICE_NAME" envDefault:"senser-egent-test"`
+	TracerUse   bool   `env:"TRACER_ON" envDefault:"false"`
 }
 
 var Web WebConfig
