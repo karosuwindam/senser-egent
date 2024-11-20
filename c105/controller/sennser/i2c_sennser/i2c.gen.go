@@ -48,10 +48,10 @@ func Test(ctx context.Context) (err error) {
 			if !ok {
 				i2cSennserType[name] = sennsertype{false, api}
 
-				testErr(errors.New("BME280 API Type Error"))
+				testErr(I2C_Type_Error_BME280)
 				continue
 			}
-			slog.Info("BME280 Test Start")
+			slog.Info("I2C BME280 Test Start")
 			i2cSennserType[name] = sennsertype{api.Test(ctx), api}
 		}
 	}
@@ -75,11 +75,11 @@ func SenserInit(ctx context.Context) (err error) {
 			api, ok := v.api.(*bme280.API)
 			if !ok {
 				i2cSennserType[name] = sennsertype{false, api}
-				initErr(errors.New("BME280 API Type Error"))
+				initErr(I2C_Type_Error_BME280)
 				continue
 			}
 			if v.flag {
-				slog.Info("BME280 Up Start")
+				slog.Info("I2C BME280 Up Start")
 				api.Up(ctx)
 			}
 		}
@@ -98,14 +98,17 @@ func SennserClose(ctx context.Context) (err error) {
 	for name, v := range i2cSennserType {
 		switch name {
 		case "BME280":
+			if !v.flag {
+				continue
+			}
 			api, ok := v.api.(*bme280.API)
 			if !ok {
 				i2cSennserType[name] = sennsertype{false, api}
-				closeErr(errors.New("BME280 API Type Error"))
+				closeErr(I2C_Type_Error_BME280)
 				continue
 			}
 			if v.flag {
-				slog.Info("BME280 Down Start")
+				slog.Info("I2C BME280 Down Start")
 				api.Down(ctx)
 				i2cSennserType[name] = sennsertype{false, api}
 			}
@@ -126,20 +129,23 @@ func ReadValue(ctx context.Context) (value I2CSennser, err error) {
 	for name, v := range i2cSennserType {
 		switch name {
 		case "BME280":
+			if !v.flag {
+				continue
+			}
 			api, ok := v.api.(*bme280.API)
 			if !ok {
 				value.Value[name] = nil
-				readErr(errors.New("BME280 API Type Error"))
+				readErr(I2C_Type_Error_BME280)
 				continue
 			}
 			if v.flag {
-				slog.Info("BME280 Read Start")
+				slog.Info("I2C BME280 Read Start")
 				if err := api.ReadData(ctx); err != nil {
 					value.Value[name] = nil
 					readErr(err)
 					continue
 				}
-				slog.Debug("BME280 Read Value", "Temp", api.Tmp, "Hum", api.Hum, "Press", api.Press)
+				slog.Debug("I2C BME280 Read Value", "Temp", api.Tmp, "Hum", api.Hum, "Press", api.Press)
 				value.Value[name] = Bme280Value{
 					Tmp:   api.Tmp,
 					Hum:   api.Hum,
@@ -154,7 +160,7 @@ func ReadValue(ctx context.Context) (value I2CSennser, err error) {
 func (value *I2CSennser) ReadBME280_value() Bme280Value {
 	bme280Value, ok := value.Value["BME280"].(Bme280Value)
 	if !ok {
-		slog.Warn("BME280 Value Type Error")
+		slog.Warn("I2C BME280 Value Type Error")
 		return Bme280Value{-1, -1, -1}
 	}
 	return bme280Value

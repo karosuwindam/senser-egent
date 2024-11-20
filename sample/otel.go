@@ -31,9 +31,9 @@ import (
 
 var grpcflag bool = true
 
-// var otlpUrl string = "localhost:4317"
+var otlpUrl string = "localhost:4317"
 
-var otlpUrl string = "otel.bookserver.home:4317"
+// var otlpUrl string = "otel.bookserver.home:4317"
 
 func initConn(url string) (*grpc.ClientConn, error) {
 	conn, err := grpc.NewClient(

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -59,10 +60,27 @@ func getSleep(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer(traceName).Start(r.Context(), "getSleep")
 	defer span.End()
 	sleepTime(ctx)
+
+	messageInit := rand.Intn(4) + 1
+	switch messageInit {
+	case 1:
+		slog.ErrorContext(ctx, "Hello, World!")
+	case 2:
+		slog.WarnContext(ctx, "Hello, World!")
+	case 3:
+		slog.DebugContext(ctx, "Hello, World!")
+	default:
+		slog.InfoContext(ctx, "Hello, World!")
+	}
+	w.Write([]byte("Hello, World!\n"))
+
 }
 
 func sleepTime(ctx context.Context) {
 	ctx, span := otel.Tracer(traceName).Start(ctx, "sleep")
 	defer span.End()
-	time.Sleep(time.Duration(rand.Intn(10)+1) * time.Microsecond * 10)
+	i := rand.Intn(10) + 1
+	slog.InfoContext(ctx, "Sleep time "+strconv.Itoa(i), "sleep time", i)
+	time.Sleep(time.Duration(i) * time.Microsecond * 10)
+
 }
