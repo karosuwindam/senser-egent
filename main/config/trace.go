@@ -155,7 +155,7 @@ func TracerStart(urldata, serviceName string, ctx context.Context) error {
 		} else {
 			shutdownFuncs = append(shutdownFuncs, shutdownMeter.Shutdown)
 		}
-		if shutdownlogger, err := initLoggerProvider(ctx, res, "http://"+TraData.HttpURL+"/v1/logs"); err != nil {
+		if shutdownlogger, err := initLoggerProvider(ctx, res, conn); err != nil {
 			return err
 		} else {
 			global.SetLoggerProvider(shutdownlogger)
