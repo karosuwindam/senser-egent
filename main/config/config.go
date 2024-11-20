@@ -18,7 +18,7 @@ type TracerData struct {
 	GrpcURL     string `env:"TRACER_GRPC_URL" envDefault:"otel-grpc.bookserver.home:4317"`
 	HttpURL     string `env:"TRACER_HTTP_URL" envDefault:"localhost:4318"`
 	ServiceName string `env:"TRACER_SERVICE_NAME" envDefault:"senser-egent-test"`
-	TracerUse   bool   `env:"TRACER_ON" envDefault:"true"`
+	TracerUse   bool   `env:"TRACER_ON" envDefault:"false"`
 }
 
 var Web WebConfig

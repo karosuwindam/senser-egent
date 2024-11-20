@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"senseregent/config"
 	i2csennser "senseregent/controller/sennser/i2c_sennser"
 	"senseregent/controller/sennser/i2c_sennser/bme280"
 	"sync"
@@ -136,6 +135,7 @@ func GetValue(ctx context.Context) (SennserValue, error) {
 			output.BME280 = &bme280
 		}
 	}
+
 	return output, nil
 }
 
@@ -246,8 +246,6 @@ func getValue(ctx context.Context) (map[string]interface{}, error) {
 }
 
 func testSennser(ctx context.Context) (err error) {
-	ctx, span := config.TracerS(ctx, "TestSenser", "Test Senser")
-	defer span.End()
 	slog.DebugContext(ctx, "Test Senser Start")
 
 	err = nil
@@ -269,8 +267,6 @@ func testSennser(ctx context.Context) (err error) {
 }
 
 func readSennser(ctx context.Context) (value map[string]interface{}, err error) {
-	ctx, span := config.TracerS(ctx, "ReadSenser", "Read Senser")
-	defer span.End()
 	slog.DebugContext(ctx, "Read Senser Start")
 
 	err = nil
@@ -297,8 +293,6 @@ func readSennser(ctx context.Context) (value map[string]interface{}, err error) 
 }
 
 func closeSennser(ctx context.Context) (err error) {
-	ctx, span := config.TracerS(ctx, "CloseSennser", "Close Senser")
-	defer span.End()
 	slog.DebugContext(ctx, "Close Senser Start")
 
 	err = nil
