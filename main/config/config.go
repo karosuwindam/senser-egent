@@ -15,10 +15,11 @@ type WebConfig struct {
 type TracerData struct {
 	GrpcOn bool `env:"TRACER_GRPC_ON" envDefault:"true"`
 	// GrpcURL     string `env:"TRACER_GRPC_URL" envDefault:"localhost:4317"`
-	GrpcURL     string `env:"TRACER_GRPC_URL" envDefault:"otel-grpc.bookserver.home:4317"`
-	HttpURL     string `env:"TRACER_HTTP_URL" envDefault:"localhost:4318"`
-	ServiceName string `env:"TRACER_SERVICE_NAME" envDefault:"senser-egent-test"`
-	TracerUse   bool   `env:"TRACER_ON" envDefault:"false"`
+	GrpcURL        string `env:"TRACER_GRPC_URL" envDefault:"otel-grpc.bookserver.home:4317"`
+	HttpURL        string `env:"TRACER_HTTP_URL" envDefault:"localhost:4318"`
+	ServiceName    string `env:"TRACER_SERVICE_NAME" envDefault:"senser-egent-test"`
+	ServiceVersion string `env:"TRACER_SERVICE_VERSION" envDefault:"v0.0.1"`
+	TracerUse      bool   `env:"TRACER_ON" envDefault:"false"`
 }
 
 var Web WebConfig

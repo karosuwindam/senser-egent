@@ -78,10 +78,8 @@ func SenserInit(ctx context.Context) (err error) {
 				initErr(I2C_Type_Error_BME280)
 				continue
 			}
-			if v.flag {
-				slog.Info("I2C BME280 Up Start")
-				api.Up(ctx)
-			}
+			slog.Info("I2C BME280 Up Start")
+			api.Up(ctx)
 		}
 	}
 	return
@@ -107,11 +105,9 @@ func SennserClose(ctx context.Context) (err error) {
 				closeErr(I2C_Type_Error_BME280)
 				continue
 			}
-			if v.flag {
-				slog.Info("I2C BME280 Down Start")
-				api.Down(ctx)
-				i2cSennserType[name] = sennsertype{false, api}
-			}
+			slog.Info("I2C BME280 Down Start")
+			api.Down(ctx)
+			i2cSennserType[name] = sennsertype{false, api}
 		}
 	}
 	return
@@ -138,19 +134,17 @@ func ReadValue(ctx context.Context) (value I2CSennser, err error) {
 				readErr(I2C_Type_Error_BME280)
 				continue
 			}
-			if v.flag {
-				slog.Info("I2C BME280 Read Start")
-				if err := api.ReadData(ctx); err != nil {
-					value.Value[name] = nil
-					readErr(err)
-					continue
-				}
-				slog.Debug("I2C BME280 Read Value", "Temp", api.Tmp, "Hum", api.Hum, "Press", api.Press)
-				value.Value[name] = Bme280Value{
-					Tmp:   api.Tmp,
-					Hum:   api.Hum,
-					Press: api.Press,
-				}
+			slog.Info("I2C BME280 Read Start")
+			if err := api.ReadData(ctx); err != nil {
+				value.Value[name] = nil
+				readErr(err)
+				continue
+			}
+			slog.Debug("I2C BME280 Read Value", "sennser", bme280.SENSER_NAME, "Temp", api.Tmp, "Hum", api.Hum, "Press", api.Press)
+			value.Value[name] = Bme280Value{
+				Tmp:   api.Tmp,
+				Hum:   api.Hum,
+				Press: api.Press,
 			}
 		}
 	}

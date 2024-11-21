@@ -2,7 +2,6 @@ package bme280
 
 import (
 	"context"
-	"fmt"
 	"senseregent/controller/sennser/i2c_sennser/common"
 	"sync"
 )
@@ -38,7 +37,7 @@ func (api *API) CalibRead(ctx context.Context) error {
 	defer api.mu.Unlock()
 
 	if readStatus(ctx) == CtrMeasReg_Sleep {
-		return fmt.Errorf("BME280 Sleep Mode")
+		return BME280_SLEEP_MODE
 	}
 	api.calib = calibRead(ctx)
 	return nil
@@ -48,7 +47,7 @@ func (api *API) ReadData(ctx context.Context) error {
 	api.mu.Lock()
 	defer api.mu.Unlock()
 	if readStatus(ctx) == CtrMeasReg_Sleep {
-		return fmt.Errorf("BME280 Sleep Mode")
+		return BME280_SLEEP_MODE
 	}
 	if len(api.calib.hum) == 0 {
 		api.calib = calibRead(ctx)

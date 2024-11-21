@@ -28,7 +28,7 @@ func (t *I2CBUS) WriteByte(ctx context.Context) error {
 	errch := make(chan error, 1)
 	i2cd, ok := readI2cContext(ctx)
 	if !ok {
-		return errors.New("error context data not fond I2C Data")
+		return CONSTEX_DATA_NOTFOND
 	}
 	go func(command, data byte) {
 		defer func() { done <- struct{}{} }()
@@ -38,9 +38,9 @@ func (t *I2CBUS) WriteByte(ctx context.Context) error {
 	}(i2cd.Command, i2cd.Data)
 	select {
 	case <-ctx.Done():
-		return errors.New("context Done")
+		return CONTEXT_DONE
 	case <-time.After(time.Second * 5):
-		return errors.New("I2c Write timeout")
+		return I2C_WRITE_TIMEOUT
 	case err := <-errch:
 		return err
 	case <-done:
@@ -58,7 +58,7 @@ func (t *I2CBUS) ReadByte(ctx context.Context) ([]byte, error) {
 	errch := make(chan error, 1)
 	i2cd, ok := readI2cContext(ctx)
 	if !ok {
-		return []byte{}, errors.New("error context data not fond I2C Data")
+		return []byte{}, CONSTEX_DATA_NOTFOND
 	}
 
 	buf := make([]byte, i2cd.ReadSize)
@@ -73,9 +73,9 @@ func (t *I2CBUS) ReadByte(ctx context.Context) ([]byte, error) {
 
 	select {
 	case <-ctx.Done():
-		return buf, errors.New("context Done")
+		return buf, CONTEXT_DONE
 	case <-time.After(time.Second * 5):
-		return buf, errors.New("I2c Read timeout")
+		return buf, I2C_READ_TIMEOUT
 	case err := <-errch:
 		return buf, err
 	case <-done:
