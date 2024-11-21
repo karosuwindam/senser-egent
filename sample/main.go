@@ -61,6 +61,7 @@ func newHTTPHandler() http.Handler {
 
 	handleFunc("/", getHello)
 	handleFunc("/sleep", getSleep)
+	handleFunc("/metrics", getMetrics)
 	handler := otelhttp.NewHandler(mux, "/")
 
 	return handler

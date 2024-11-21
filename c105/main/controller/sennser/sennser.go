@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"senseregent/controller/sennser/common"
 	i2csennser "senseregent/controller/sennser/i2c_sennser"
-	"senseregent/controller/sennser/i2c_sennser/bme280"
 	"sync"
 	"time"
 )
@@ -163,27 +163,27 @@ func (v *SennserValue) toBME280Type() []ValueType {
 		Senser:      "BME280",
 		Type:        "tmp",
 		Data:        tmp,
-		help:        bme280.PROMQLHELP,
-		types:       bme280.PROMQLTYPE,
-		promeQLName: bme280.PROMQLNAME,
+		help:        common.PROMQL_HELP_TMP,
+		types:       common.PROMQLTYPE_GAUGE,
+		promeQLName: common.PROMQLNAME_BME280,
 	})
 	hum := fmt.Sprintf("%.2f", v.BME280.Hum)
 	output = append(output, ValueType{
 		Senser:      "BME280",
 		Type:        "hum",
 		Data:        hum,
-		help:        bme280.PROMQLHELP,
-		types:       bme280.PROMQLTYPE,
-		promeQLName: bme280.PROMQLNAME,
+		help:        common.PROMQL_HELP_HUM,
+		types:       common.PROMQLTYPE_GAUGE,
+		promeQLName: common.PROMQLNAME_BME280,
 	})
 	press := fmt.Sprintf("%.2f", v.BME280.Press)
 	output = append(output, ValueType{
 		Senser:      "BME280",
 		Type:        "press",
 		Data:        press,
-		help:        bme280.PROMQLHELP,
-		types:       bme280.PROMQLTYPE,
-		promeQLName: bme280.PROMQLNAME,
+		help:        common.PROMQL_HELP_PRESS,
+		types:       common.PROMQLTYPE_GAUGE,
+		promeQLName: common.PROMQLNAME_BME280,
 	})
 	return output
 }
@@ -204,9 +204,9 @@ func (v *SennserValue) toBME280PromQL() string {
 	var output string
 	if v.BME280 != nil {
 		velue := v.toBME280Type()
-		output += velue[0].promqlHelp()
-		output += velue[0].promqlType()
 		for _, v := range velue {
+			output += v.promqlHelp()
+			output += v.promqlType()
 			output += v.promqlValue("BME280")
 		}
 	}
@@ -223,7 +223,7 @@ func (v *ValueType) promqlType() string {
 
 func (v *ValueType) promqlValue(sennserName string) string {
 	return fmt.Sprintf("%s{type=\"%s\", sennser=\"%s\"} %s\n",
-		v.promeQLName, v.Type, sennserName, v.Data,
+		"senser"+"_"+v.Type+"_value", v.Type, sennserName, v.Data,
 	)
 }
 

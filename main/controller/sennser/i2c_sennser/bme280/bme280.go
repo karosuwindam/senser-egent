@@ -13,7 +13,7 @@ const (
 	SENSER_NAME string = "BME280"
 	PROMQLNAME  string = "senser_data"
 	PROMQLHELP  string = "bme280 senser data Temp('C), Press(hPa), Hum(%H)"
-	PROMQLTYPE  string = "scalar"
+	PROMQLTYPE  string = "gauge"
 )
 
 var (

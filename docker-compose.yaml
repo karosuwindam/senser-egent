@@ -10,8 +10,8 @@ services:
       - 8080:8080
     privileged: true
     environment:
-      - TRACER_GRPC_URL: otel-collector:4317
-      - TRACER_ON: true
+      - TRACER_GRPC_URL=otel-collector:4317
+      - TRACER_ON=true
     depends_on:
       - otel-collector
 
