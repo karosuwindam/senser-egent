@@ -1,0 +1,50 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+processors:
+  attributes:
+    actions:
+    - action: insert
+      key: loki.attribute.labels
+      value: http_status_code
+  
+extensions:
+  health_check: {}
+exporters:
+  otlp:
+    endpoint: jaeger:4317
+    # endpoint: tempo:4317
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: 0.0.0.0:9090
+    namespace: testapp
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+    # endpoint: http://loki:3100/loki/api/v1/push
+    # default_labels_enabled:
+    #   exporter: true
+    #   job: true   
+  debug:
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: []
+      exporters: [otlp, debug]
+      # exporters: [otlp, debug]
+
+    metrics:
+      receivers: [otlp]
+      processors: []
+      exporters: [prometheus, debug]
+    logs:
+      receivers: [otlp]
+      processors: []
+      exporters: [otlphttp/loki, debug]

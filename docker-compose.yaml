@@ -1,0 +1,65 @@
+version: '3'
+
+services:
+  agent-sennser:
+    image: agent-sennser
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    privileged: true
+    environment:
+      - TRACER_GRPC_URL: otel-collector:4317
+      - TRACER_ON: true
+    depends_on:
+      - otel-collector
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.112.0
+    command: ["--config=/etc/otel-collector.yaml"]
+    volumes:
+      - ./config/otel-collector.yaml:/etc/otel-collector.yaml
+    ports:
+      - 4317:4317
+      - 4318:4318
+      - 9091:9090
+    depends_on:
+      jaeger:
+        condition: service_started
+      loki:
+        condition: service_started
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    volumes:
+      - ./config/prometheus.yaml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+  jaeger:
+    image: jaegertracing/all-in-one:1.58
+    container_name: jaeger
+    environment:
+        TZ: 'Asia/Tokyo'
+    ports:
+        - 16686:16686
+        - 14268:14268
+  loki:
+    image: grafana/loki:3.1.0
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./config/local-config.yaml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+  grafana:
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor traceQLStreaming metricsSummary
+    image: grafana/grafana:11.3.0
+    container_name: grafana
+    volumes:
+      - ./config/datasource.yaml:/etc/grafana/provisioning/datasources/datasource.yaml
+
+    ports:
+      - 3000:3000
