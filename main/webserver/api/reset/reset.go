@@ -10,7 +10,7 @@ import (
 func getReset(w http.ResponseWriter, r *http.Request) {
 	ctx, span := config.TracerS(r.Context(), "getReset", "reset")
 	defer span.End()
-	slog.DebugContext(ctx, "getReset")
+	slog.DebugContext(ctx, r.Method+":"+r.URL.Path, "Method", r.Method, "Path", r.URL.Path, "RemoteAddr", r.RemoteAddr)
 	//なんにもせずに、/metricsに移動を指示
 	http.Redirect(w, r, "/metrics", http.StatusFound)
 }
@@ -20,7 +20,7 @@ func postReset(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 	controllerAPI := controller.NewAPI()
 
-	slog.DebugContext(ctx, "postReset")
+	slog.DebugContext(ctx, r.Method+":"+r.URL.Path, "Method", r.Method, "Path", r.URL.Path, "RemoteAddr", r.RemoteAddr)
 	//センサーの定期取得処理をリセットする
 	if err := controllerAPI.ResetSennser(ctx); err != nil {
 		slog.ErrorContext(ctx, "ResetSennser error", "error", err)

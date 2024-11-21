@@ -24,6 +24,6 @@ build: create
 rm: 
 	${DOCKER} rmi ${NAME}:${TAG}
 run:
-	${DOCKER} run --rm --name=${NAME} ${OPT} -e TRACER_ON:${TRACER_ON} -e TRACER_GRPC_URL:${TRACER_GRPC_URL} -p 18080:8080 ${NAME}:${TAG}
+	${DOCKER} run --rm --name=${NAME} ${OPT} -e TRACER_ON=${TRACER_ON} -e TRACER_GRPC_URL=${TRACER_GRPC_URL} -p 18080:8080 ${NAME}:${TAG}
 push:
 	${DOCKER} push ${NAME}:${TAG}

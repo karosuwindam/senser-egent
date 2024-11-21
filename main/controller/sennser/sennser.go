@@ -11,6 +11,8 @@ import (
 	"senseregent/controller/sennser/i2c_sennser/bme280"
 	"sync"
 	"time"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var shutdown chan struct{}
@@ -96,6 +98,12 @@ func Stop(ctx context.Context) error {
 }
 
 func Reset(ctx context.Context) error {
+	ctx, span := config.TracerS(ctx, "Reset", "Reset Senser")
+	defer span.End()
+	span.SetAttributes(
+		attribute.Int("Reset Count", len(reset)),
+	)
+
 	if len(reset) > 0 {
 		return errors.New("Reset Already")
 	}
@@ -118,6 +126,8 @@ type ValueType struct {
 }
 
 func GetValue(ctx context.Context) (SennserValue, error) {
+	ctx, span := config.TracerS(ctx, "GetValue", "Get Value")
+	defer span.End()
 	var output SennserValue = SennserValue{}
 	v, err := getValue(ctx)
 	if err != nil {
@@ -133,6 +143,11 @@ func GetValue(ctx context.Context) (SennserValue, error) {
 			if !ok {
 				return SennserValue{}, errors.New("BME280 Value Type Error")
 			}
+			span.SetAttributes(
+				attribute.Float64("BME280_Tmp", bme280.Tmp),
+				attribute.Float64("BME280_Press", bme280.Press),
+				attribute.Float64("BME280_Hum", bme280.Hum),
+			)
 			output.BME280 = &bme280
 		}
 	}

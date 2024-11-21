@@ -38,12 +38,6 @@ var cfg SetupServer
 var shutdown chan bool
 var done chan bool
 
-func HelloWeb(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Hello Web"))
-}
-
 func Init() error {
 	shutdown = make(chan bool, 1)
 	done = make(chan bool, 1)

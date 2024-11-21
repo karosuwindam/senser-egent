@@ -10,6 +10,7 @@ import (
 func getMetrics(w http.ResponseWriter, r *http.Request) {
 	ctx, span := config.TracerS(r.Context(), "getMetrics", "metrics")
 	defer span.End()
+	slog.DebugContext(ctx, r.Method+":"+r.URL.Path, "Method", r.Method, "Path", r.URL.Path, "RemoteAddr", r.RemoteAddr)
 	controllerAPI := controller.NewAPI()
 	value, err := controllerAPI.ReadValue(ctx)
 	if err != nil {

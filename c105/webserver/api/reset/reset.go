@@ -8,13 +8,16 @@ import (
 
 func getReset(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	slog.DebugContext(ctx, "getReset")
+	slog.DebugContext(ctx, r.Method+":"+r.URL.Path, "Method", r.Method, "Path", r.URL.Path, "RemoteAddr", r.RemoteAddr)
+
 	//なんにもせずに、/metricsに移動を指示
 	http.Redirect(w, r, "/metrics", http.StatusFound)
 }
 
 func postReset(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	slog.DebugContext(ctx, r.Method+":"+r.URL.Path, "Method", r.Method, "Path", r.URL.Path, "RemoteAddr", r.RemoteAddr)
+
 	controllerAPI := controller.NewAPI()
 
 	slog.DebugContext(ctx, "postReset")

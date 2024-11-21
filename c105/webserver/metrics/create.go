@@ -8,6 +8,7 @@ import (
 
 func getMetrics(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	slog.DebugContext(ctx, r.Method+":"+r.URL.Path, "Method", r.Method, "Path", r.URL.Path, "RemoteAddr", r.RemoteAddr)
 	controllerAPI := controller.NewAPI()
 	value, err := controllerAPI.ReadValue(ctx)
 	if err != nil {
