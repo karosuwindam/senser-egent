@@ -31,3 +31,13 @@ datasources:
     version: 1
     editable: false
     apiVersion: 1
+  - name: tempo
+    type: tempo
+    access: proxy
+    orgId: 1
+    url: http://tempo:3200
+    basicAuth: false
+    isDefault: false
+    version: 1
+    editable: false
+    apiVersion: 1

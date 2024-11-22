@@ -29,6 +29,8 @@ services:
         condition: service_started
       loki:
         condition: service_started
+      tempo:
+        condition: service_started
   prometheus:
     image: prom/prometheus:v2.53.0
     volumes:
@@ -43,6 +45,16 @@ services:
     ports:
         - 16686:16686
         - 14268:14268
+  tempo:
+    image: grafana/tempo:2.6.1
+    ports:
+      - "14269:14268"  # jaeger ingest
+      - "3200:3200"   # tempo
+      - "9095:9095" # tempo grpc
+    volumes:
+      - ./config/tempo.yaml:/etc/tempo/config.yaml
+    command: 
+      - -config.file=/etc/tempo/config.yaml
   loki:
     image: grafana/loki:3.1.0
     ports:

@@ -43,12 +43,20 @@ ruler:
 limits_config:
   otlp_config:
     resource_attributes:
+      ignore_defaults: true
       attributes_config:
         - action: index_label
           attributes:
-            - telemetry.sdk.language
-            # - traceid
-    log_attributes:
-      - action: structured_metadata
-        attributes:
-          - user.id
+            # - telemetry.sdk.language
+            - service.name
+            - service.version
+            - host.name
+            - process.runtime.name
+    # scope_attributes:
+    #   - action: structured_metadata
+    #     attributes:
+    #       - trace.id
+    # log_attributes:
+    #   - action: structured_metadata
+    #     attributes:
+    #       - user.id
