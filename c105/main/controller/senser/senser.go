@@ -207,7 +207,7 @@ func (v *SenserValue) toBME280PromQL() string {
 		for _, v := range velue {
 			output += v.promqlHelp()
 			output += v.promqlType()
-			output += v.promqlValue("BME280")
+			output += v.promqlValue(v.Senser)
 		}
 	}
 	return output

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"log/slog"
 	"senseregent/config"
+	"senseregent/controller/senser/common"
 	i2csenser "senseregent/controller/senser/i2c_senser"
-	"senseregent/controller/senser/i2c_senser/bme280"
 	"sync"
 	"time"
 
@@ -178,27 +178,27 @@ func (v *SenserValue) toBME280Type() []ValueType {
 		Senser:      "BME280",
 		Type:        "tmp",
 		Data:        tmp,
-		help:        bme280.PROMQLHELP,
-		types:       bme280.PROMQLTYPE,
-		promeQLName: bme280.PROMQLNAME,
+		help:        common.PROMQL_HELP_TMP,
+		types:       common.PROMQLTYPE_GAUGE,
+		promeQLName: common.PROMQLNAME + "_" + "tmp",
 	})
 	hum := fmt.Sprintf("%.2f", v.BME280.Hum)
 	output = append(output, ValueType{
 		Senser:      "BME280",
 		Type:        "hum",
 		Data:        hum,
-		help:        bme280.PROMQLHELP,
-		types:       bme280.PROMQLTYPE,
-		promeQLName: bme280.PROMQLNAME,
+		help:        common.PROMQL_HELP_HUM,
+		types:       common.PROMQLTYPE_GAUGE,
+		promeQLName: common.PROMQLNAME + "_" + "hum",
 	})
 	press := fmt.Sprintf("%.2f", v.BME280.Press)
 	output = append(output, ValueType{
 		Senser:      "BME280",
 		Type:        "press",
 		Data:        press,
-		help:        bme280.PROMQLHELP,
-		types:       bme280.PROMQLTYPE,
-		promeQLName: bme280.PROMQLNAME,
+		help:        common.PROMQL_HELP_PRESS,
+		types:       common.PROMQLTYPE_GAUGE,
+		promeQLName: common.PROMQLNAME + "_" + "press",
 	})
 	return output
 }
@@ -219,10 +219,10 @@ func (v *SenserValue) toBME280PromQL() string {
 	var output string
 	if v.BME280 != nil {
 		velue := v.toBME280Type()
-		output += velue[0].promqlHelp()
-		output += velue[0].promqlType()
 		for _, v := range velue {
-			output += v.promqlValue("BME280")
+			output += v.promqlHelp()
+			output += v.promqlType()
+			output += v.promqlValue(v.Senser)
 		}
 	}
 	return output

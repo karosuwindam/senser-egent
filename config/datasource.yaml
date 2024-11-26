@@ -14,6 +14,7 @@ datasources:
       httpMethod: GET
   - name: Loki
     type: loki
+    uid: loki
     access: proxy
     orgId: 1
     url: http://loki:3100
@@ -21,6 +22,13 @@ datasources:
     isDefault: true
     version: 1
     editable: false
+    jsonData:
+      derivedFields:
+      - datasourceName: Tempo
+        datasourceUid: tempo
+        matcherRegex: trace_id=(\w+)
+        name: traceID
+        url: '$${__value.raw}'
   - name: jaeger
     type: jaeger
     access: proxy
@@ -33,6 +41,7 @@ datasources:
     apiVersion: 1
   - name: tempo
     type: tempo
+    uid: tempo
     access: proxy
     orgId: 1
     url: http://tempo:3200
@@ -41,3 +50,10 @@ datasources:
     version: 1
     editable: false
     apiVersion: 1
+    jsonData:
+      tracesToLogs:
+        datasourceUid: loki
+        tags:
+          - cluster
+          - namespace
+          - pod
