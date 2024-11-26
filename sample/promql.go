@@ -15,7 +15,7 @@ func getMetrics(w http.ResponseWriter, r *http.Request) {
 
 func initmetrics() {
 	tmp := prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: "sennser",
+		Namespace: "senser",
 		Name:      "value",
 		Help:      "Random number",
 		Subsystem: "temp",
@@ -24,7 +24,7 @@ func initmetrics() {
 		},
 	})
 	hum := prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: "sennser",
+		Namespace: "senser",
 		Name:      "value",
 		Help:      "Random number",
 		Subsystem: "hum",

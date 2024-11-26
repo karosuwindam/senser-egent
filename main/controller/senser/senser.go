@@ -1,4 +1,4 @@
-package sennser
+package senser
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"log/slog"
 	"senseregent/config"
-	i2csennser "senseregent/controller/sennser/i2c_sennser"
-	"senseregent/controller/sennser/i2c_sennser/bme280"
+	i2csenser "senseregent/controller/senser/i2c_senser"
+	"senseregent/controller/senser/i2c_senser/bme280"
 	"sync"
 	"time"
 
@@ -20,7 +20,7 @@ var done chan struct{}
 var reset chan struct{}
 
 func init() {
-	if err := i2csennser.Init(); err != nil {
+	if err := i2csenser.Init(); err != nil {
 		panic(err)
 	}
 	shutdown = make(chan struct{}, 1)
@@ -29,28 +29,28 @@ func init() {
 }
 
 func Run(ctx context.Context) error {
-	slog.InfoContext(ctx, "Sennser Run Start")
+	slog.InfoContext(ctx, "Senser Run Start")
 	teststop := make(chan struct{}, 1)
 	go func(ctx context.Context) {
-		slog.DebugContext(ctx, "Sennser Test Check Start")
+		slog.DebugContext(ctx, "Senser Test Check Start")
 		var oneshut chan struct{} = make(chan struct{}, 1)
 		oneshut <- struct{}{}
 		for {
 			select {
 			case <-oneshut:
-				if err := testSennser(ctx); err != nil {
+				if err := testSenser(ctx); err != nil {
 					slog.ErrorContext(ctx, "testSenser error", "error", err)
 				}
 			case <-reset:
-				if err := closeSennser(ctx); err != nil {
-					slog.ErrorContext(ctx, "closeSennser error", "error", err)
+				if err := closeSenser(ctx); err != nil {
+					slog.ErrorContext(ctx, "closeSenser error", "error", err)
 				}
 				oneshut <- struct{}{}
 			case <-teststop:
-				slog.DebugContext(ctx, "Sennser Test Check Stop")
+				slog.DebugContext(ctx, "Senser Test Check Stop")
 				return
 			case <-ctx.Done():
-				slog.ErrorContext(ctx, "Sennser Test Check Stop")
+				slog.ErrorContext(ctx, "Senser Test Check Stop")
 				return
 			}
 		}
@@ -59,9 +59,9 @@ loop:
 	for {
 		select {
 		case <-shutdown:
-			slog.DebugContext(ctx, "Sennser Run Shutdown Start")
-			if err := closeSennser(ctx); err != nil {
-				slog.ErrorContext(ctx, "closeSennser error", "error", err)
+			slog.DebugContext(ctx, "Senser Run Shutdown Start")
+			if err := closeSenser(ctx); err != nil {
+				slog.ErrorContext(ctx, "closeSenser error", "error", err)
 			}
 			teststop <- struct{}{}
 			done <- struct{}{}
@@ -69,23 +69,23 @@ loop:
 		case <-ctx.Done():
 			break loop
 		case <-time.After(200 * time.Millisecond):
-			v, err := readSennser(ctx)
+			v, err := readSenser(ctx)
 			if err != nil {
-				slog.ErrorContext(ctx, "readSennser error", "error", err)
+				slog.ErrorContext(ctx, "readSenser error", "error", err)
 				continue
 			}
 			if err := setValue(ctx, v); err != nil {
 				slog.ErrorContext(ctx, "setValue error", "error", err)
 			}
-			slog.DebugContext(ctx, "readSennser", "value", v)
+			slog.DebugContext(ctx, "readSenser", "value", v)
 		}
 	}
-	slog.InfoContext(ctx, "Sennser Run Stop")
+	slog.InfoContext(ctx, "Senser Run Stop")
 	return nil
 }
 
 func Stop(ctx context.Context) error {
-	slog.InfoContext(ctx, "Sennser Stop Start")
+	slog.InfoContext(ctx, "Senser Stop Start")
 	shutdown <- struct{}{}
 	select {
 	case <-done:
@@ -107,13 +107,13 @@ func Reset(ctx context.Context) error {
 	if len(reset) > 0 {
 		return errors.New("Reset Already")
 	}
-	slog.InfoContext(ctx, "Sennser Reset")
+	slog.InfoContext(ctx, "Senser Reset")
 	reset <- struct{}{}
 	return nil
 }
 
-type SennserValue struct {
-	BME280 *i2csennser.Bme280Value
+type SenserValue struct {
+	BME280 *i2csenser.Bme280Value
 }
 
 type ValueType struct {
@@ -125,23 +125,23 @@ type ValueType struct {
 	promeQLName string
 }
 
-func GetValue(ctx context.Context) (SennserValue, error) {
+func GetValue(ctx context.Context) (SenserValue, error) {
 	ctx, span := config.TracerS(ctx, "GetValue", "Get Value")
 	defer span.End()
-	var output SennserValue = SennserValue{}
+	var output SenserValue = SenserValue{}
 	v, err := getValue(ctx)
 	if err != nil {
 		return output, err
 	}
 	if len(v) == 0 {
-		return output, errors.New("Sennser Value is Empty")
+		return output, errors.New("Senser Value is Empty")
 	}
 	for name, val := range v {
 		switch name {
 		case "BME280":
-			bme280, ok := val.(i2csennser.Bme280Value)
+			bme280, ok := val.(i2csenser.Bme280Value)
 			if !ok {
-				return SennserValue{}, errors.New("BME280 Value Type Error")
+				return SenserValue{}, errors.New("BME280 Value Type Error")
 			}
 			span.SetAttributes(
 				attribute.Float64("BME280_Tmp", bme280.Tmp),
@@ -154,7 +154,7 @@ func GetValue(ctx context.Context) (SennserValue, error) {
 	return output, nil
 }
 
-func (v *SennserValue) ToValueType() []ValueType {
+func (v *SenserValue) ToValueType() []ValueType {
 	var output []ValueType
 	if v.BME280 != nil {
 		output = append(output, v.toBME280Type()...)
@@ -162,7 +162,7 @@ func (v *SennserValue) ToValueType() []ValueType {
 	return output
 }
 
-func (v *SennserValue) ToJson() string {
+func (v *SenserValue) ToJson() string {
 	tmpValue := v.ToValueType()
 	json, err := json.Marshal(tmpValue)
 	if err != nil {
@@ -171,7 +171,7 @@ func (v *SennserValue) ToJson() string {
 	return string(json)
 }
 
-func (v *SennserValue) toBME280Type() []ValueType {
+func (v *SenserValue) toBME280Type() []ValueType {
 	var output []ValueType
 	tmp := fmt.Sprintf("%.2f", v.BME280.Tmp)
 	output = append(output, ValueType{
@@ -203,7 +203,7 @@ func (v *SennserValue) toBME280Type() []ValueType {
 	return output
 }
 
-func (v *SennserValue) ToPromQL() string {
+func (v *SenserValue) ToPromQL() string {
 	var output string
 	if v.BME280 != nil {
 		if output == "" {
@@ -215,7 +215,7 @@ func (v *SennserValue) ToPromQL() string {
 	return output
 }
 
-func (v *SennserValue) toBME280PromQL() string {
+func (v *SenserValue) toBME280PromQL() string {
 	var output string
 	if v.BME280 != nil {
 		velue := v.toBME280Type()
@@ -236,9 +236,9 @@ func (v *ValueType) promqlType() string {
 	return fmt.Sprintf("# TYPE %s %s\n", v.promeQLName, v.types)
 }
 
-func (v *ValueType) promqlValue(sennserName string) string {
-	return fmt.Sprintf("%s{type=\"%s\", sennser=\"%s\"} %s\n",
-		v.promeQLName, v.Type, sennserName, v.Data,
+func (v *ValueType) promqlValue(senserName string) string {
+	return fmt.Sprintf("%s{type=\"%s\", senser=\"%s\"} %s\n",
+		v.promeQLName, v.Type, senserName, v.Data,
 	)
 }
 
@@ -260,7 +260,7 @@ func getValue(ctx context.Context) (map[string]interface{}, error) {
 	return tmpvalue, nil
 }
 
-func testSennser(ctx context.Context) (err error) {
+func testSenser(ctx context.Context) (err error) {
 	ctx, span := config.TracerS(ctx, "TestSenser", "Test Senser")
 	defer span.End()
 	slog.DebugContext(ctx, "Test Senser Start")
@@ -273,17 +273,17 @@ func testSennser(ctx context.Context) (err error) {
 	wg.Add(1)
 	go func(ctx context.Context) {
 		defer wg.Done()
-		if err := i2csennser.Test(ctx); err != nil {
+		if err := i2csenser.Test(ctx); err != nil {
 			testErr(err)
 		} else {
-			i2csennser.SenserInit(ctx)
+			i2csenser.SenserInit(ctx)
 		}
 	}(ctx)
 	wg.Wait()
 	return
 }
 
-func readSennser(ctx context.Context) (value map[string]interface{}, err error) {
+func readSenser(ctx context.Context) (value map[string]interface{}, err error) {
 	ctx, span := config.TracerS(ctx, "ReadSenser", "Read Senser")
 	defer span.End()
 	slog.DebugContext(ctx, "Read Senser Start")
@@ -297,8 +297,8 @@ func readSennser(ctx context.Context) (value map[string]interface{}, err error) 
 	wg.Add(1)
 	go func(ctx context.Context) {
 		defer wg.Done()
-		slog.DebugContext(ctx, "readSennser I2C ReadValue Start")
-		v, err := i2csennser.ReadValue(ctx)
+		slog.DebugContext(ctx, "readSenser I2C ReadValue Start")
+		v, err := i2csenser.ReadValue(ctx)
 		if err != nil {
 			readErr(err)
 			return
@@ -311,8 +311,8 @@ func readSennser(ctx context.Context) (value map[string]interface{}, err error) 
 	return
 }
 
-func closeSennser(ctx context.Context) (err error) {
-	ctx, span := config.TracerS(ctx, "CloseSennser", "Close Senser")
+func closeSenser(ctx context.Context) (err error) {
+	ctx, span := config.TracerS(ctx, "CloseSenser", "Close Senser")
 	defer span.End()
 	slog.DebugContext(ctx, "Close Senser Start")
 
@@ -324,7 +324,7 @@ func closeSennser(ctx context.Context) (err error) {
 	wg.Add(1)
 	go func(ctx context.Context) {
 		defer wg.Done()
-		if err := i2csennser.SennserClose(ctx); err != nil {
+		if err := i2csenser.SenserClose(ctx); err != nil {
 			closeErr(err)
 		}
 	}(ctx)

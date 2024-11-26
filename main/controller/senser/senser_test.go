@@ -1,4 +1,4 @@
-package sennser
+package senser
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func TestSennserRun(t *testing.T) {
+func TestSenserRun(t *testing.T) {
 	slog.SetDefault(config.LoggerConfig(slog.LevelDebug))
 
 	ctx := context.Background()

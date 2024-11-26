@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"senseregent/controller/sennser/i2c_sennser/common"
+	"senseregent/controller/senser/i2c_senser/common"
 	"sync"
 	"time"
 )
@@ -15,7 +15,6 @@ var (
 	oneshut  chan bool
 	done     chan bool
 	reset    chan bool
-	initflag bool
 )
 
 type contextData struct {
@@ -119,6 +118,7 @@ func Stop(ctx context.Context) error {
 }
 func Test(ctx context.Context) error {
 	errch := make(chan error, 1)
+	var err error = nil
 	go func(ctx context.Context) {
 		if readICIDCheck(ctx) {
 			errch <- errors.New("BME280 Test check error")
@@ -126,15 +126,16 @@ func Test(ctx context.Context) error {
 			errch <- nil
 		}
 	}(ctx)
+
 	select {
 	case <-ctx.Done():
-		return errors.New("context Done")
+		err = errors.New("context Done")
 	case <-time.After(5 * time.Second):
-		return fmt.Errorf("5second over time")
-	case err := <-errch:
-		return err
+		err = fmt.Errorf("5second over time")
+	case err = <-errch:
+		break
 	}
-	return nil
+	return err
 }
 
 func Reset() {

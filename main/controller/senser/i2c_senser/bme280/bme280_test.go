@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"senseregent/controller/sennser/i2c_sennser/common"
+	"senseregent/controller/senser/i2c_senser/common"
 	"testing"
 )
 

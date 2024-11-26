@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"senseregent/controller/sennser"
+	"senseregent/controller/senser"
 	"time"
 )
 
@@ -21,18 +21,18 @@ func Init() error {
 func Run(ctx context.Context) error {
 	slog.InfoContext(ctx, "Controller Run Start")
 	go func(ctx context.Context) {
-		if err := sennser.Run(ctx); err != nil {
-			slog.ErrorContext(ctx, "Sennser Run error", "error", err)
+		if err := senser.Run(ctx); err != nil {
+			slog.ErrorContext(ctx, "Senser Run error", "error", err)
 		}
 	}(ctx)
 	select {
 	case <-shutdown:
-		if err := sennser.Stop(ctx); err != nil {
-			slog.ErrorContext(ctx, "Sennser Stop error", "error", err)
+		if err := senser.Stop(ctx); err != nil {
+			slog.ErrorContext(ctx, "Senser Stop error", "error", err)
 		}
 		done <- struct{}{}
 	case <-ctx.Done():
-		slog.ErrorContext(ctx, "Sennser Run Stop by context")
+		slog.ErrorContext(ctx, "Senser Run Stop by context")
 	}
 	slog.InfoContext(ctx, "Controller Run Stop")
 	return nil

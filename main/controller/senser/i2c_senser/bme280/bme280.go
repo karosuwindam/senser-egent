@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"senseregent/config"
-	"senseregent/controller/sennser/i2c_sennser/common"
+	"senseregent/controller/senser/i2c_senser/common"
 
 	"go.opentelemetry.io/otel/attribute"
 )

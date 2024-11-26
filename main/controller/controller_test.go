@@ -27,8 +27,8 @@ func TestController(t *testing.T) {
 			}
 			time.Sleep(300 * time.Millisecond)
 		}
-		if err := api.ResetSennser(ctx); err != nil {
-			t.Errorf("ResetSennser error %v", err)
+		if err := api.ResetSenser(ctx); err != nil {
+			t.Errorf("ResetSenser error %v", err)
 		}
 		for i := 0; i < 3; i++ {
 			if v, err := api.ReadValue(ctx); err != nil {

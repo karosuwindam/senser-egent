@@ -2,7 +2,7 @@ package bme280
 
 import (
 	"context"
-	"senseregent/controller/sennser/i2c_sennser/common"
+	"senseregent/controller/senser/i2c_senser/common"
 	"sync"
 )
 

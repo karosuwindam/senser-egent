@@ -1,4 +1,4 @@
-package i2csennser
+package i2csenser
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestI2csennser(t *testing.T) {
+func TestI2csenser(t *testing.T) {
 	handler := slog.NewTextHandler(
 		os.Stdout,
 		&slog.HandlerOptions{Level: slog.LevelDebug},
@@ -35,7 +35,7 @@ func TestI2csennser(t *testing.T) {
 	} else {
 		t.Logf("ReadBME280_value OK %v", a)
 	}
-	if err := SennserClose(ctx); err != nil {
-		t.Fatalf("SennserClose Error")
+	if err := SenserClose(ctx); err != nil {
+		t.Fatalf("SenserClose Error")
 	}
 }

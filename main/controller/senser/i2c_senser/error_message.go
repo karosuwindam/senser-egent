@@ -1,4 +1,4 @@
-package i2csennser
+package i2csenser
 
 import "errors"
 

@@ -22,8 +22,8 @@ func postReset(w http.ResponseWriter, r *http.Request) {
 
 	slog.DebugContext(ctx, r.Method+":"+r.URL.Path, "Method", r.Method, "Path", r.URL.Path, "RemoteAddr", r.RemoteAddr)
 	//センサーの定期取得処理をリセットする
-	if err := controllerAPI.ResetSennser(ctx); err != nil {
-		slog.ErrorContext(ctx, "ResetSennser error", "error", err)
+	if err := controllerAPI.ResetSenser(ctx); err != nil {
+		slog.ErrorContext(ctx, "ResetSenser error", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

@@ -1,17 +1,18 @@
-package i2csennser
+package i2csenser
 
 import (
 	"context"
 	"errors"
 	"log/slog"
-	"senseregent/controller/sennser/i2c_sennser/bme280"
+	"senseregent/config"
+	"senseregent/controller/senser/i2c_senser/bme280"
 )
 
-type I2CSennser struct {
+type I2CSenser struct {
 	Value map[string]interface{}
 }
 
-type sennsertype struct {
+type sensertype struct {
 	flag bool
 	api  interface{}
 }
@@ -22,17 +23,19 @@ type Bme280Value struct {
 	Press float64
 }
 
-var i2cSennserType map[string]sennsertype
+var i2cSenserType map[string]sensertype
 
 func Init() error {
-	slog.Debug("I2C Sennser Init")
+	slog.Debug("I2C Senser Init")
 
-	i2cSennserType = make(map[string]sennsertype)
-	i2cSennserType["BME280"] = sennsertype{false, bme280.APIInit()}
+	i2cSenserType = make(map[string]sensertype)
+	i2cSenserType["BME280"] = sensertype{false, bme280.APIInit()}
 	return nil
 }
 
 func Test(ctx context.Context) (err error) {
+	ctx, span := config.TracerS(ctx, "Test", "i2c Test")
+	defer span.End()
 	slog.DebugContext(ctx, "i2c Test Start")
 
 	err = nil
@@ -41,24 +44,26 @@ func Test(ctx context.Context) (err error) {
 		err = errors.Join(err, inErr)
 	}
 
-	for name, v := range i2cSennserType {
+	for name, v := range i2cSenserType {
 		switch name {
 		case "BME280":
 			api, ok := v.api.(*bme280.API)
 			if !ok {
-				i2cSennserType[name] = sennsertype{false, api}
+				i2cSenserType[name] = sensertype{false, api}
 
 				testErr(I2C_Type_Error_BME280)
 				continue
 			}
 			slog.Info("I2C BME280 Test Start")
-			i2cSennserType[name] = sennsertype{api.Test(ctx), api}
+			i2cSenserType[name] = sensertype{api.Test(ctx), api}
 		}
 	}
 	return
 }
 
 func SenserInit(ctx context.Context) (err error) {
+	ctx, span := config.TracerS(ctx, "SenserInit", "i2c SenserInit")
+	defer span.End()
 	slog.DebugContext(ctx, "I2C SenserInit Start")
 
 	err = nil
@@ -66,7 +71,7 @@ func SenserInit(ctx context.Context) (err error) {
 	initErr := func(inErr error) {
 		err = errors.Join(err, inErr)
 	}
-	for name, v := range i2cSennserType {
+	for name, v := range i2cSenserType {
 		switch name {
 		case "BME280":
 			if !v.flag {
@@ -74,7 +79,7 @@ func SenserInit(ctx context.Context) (err error) {
 			}
 			api, ok := v.api.(*bme280.API)
 			if !ok {
-				i2cSennserType[name] = sennsertype{false, api}
+				i2cSenserType[name] = sensertype{false, api}
 				initErr(I2C_Type_Error_BME280)
 				continue
 			}
@@ -85,15 +90,17 @@ func SenserInit(ctx context.Context) (err error) {
 	return
 }
 
-func SennserClose(ctx context.Context) (err error) {
-	slog.DebugContext(ctx, "I2C SennserClose Start")
+func SenserClose(ctx context.Context) (err error) {
+	ctx, span := config.TracerS(ctx, "SenserClose", "i2c SenserClose")
+	defer span.End()
+	slog.DebugContext(ctx, "I2C SenserClose Start")
 
 	err = nil
 	//err にはエラーがあればエラーを登録する
 	closeErr := func(inErr error) {
 		err = errors.Join(err, inErr)
 	}
-	for name, v := range i2cSennserType {
+	for name, v := range i2cSenserType {
 		switch name {
 		case "BME280":
 			if !v.flag {
@@ -101,28 +108,30 @@ func SennserClose(ctx context.Context) (err error) {
 			}
 			api, ok := v.api.(*bme280.API)
 			if !ok {
-				i2cSennserType[name] = sennsertype{false, api}
+				i2cSenserType[name] = sensertype{false, api}
 				closeErr(I2C_Type_Error_BME280)
 				continue
 			}
 			slog.Info("I2C BME280 Down Start")
 			api.Down(ctx)
-			i2cSennserType[name] = sennsertype{false, api}
+			i2cSenserType[name] = sensertype{false, api}
 		}
 	}
 	return
 }
 
-func ReadValue(ctx context.Context) (value I2CSennser, err error) {
+func ReadValue(ctx context.Context) (value I2CSenser, err error) {
+	ctx, span := config.TracerS(ctx, "ReadValue", "i2c ReadValue")
+	defer span.End()
 	slog.DebugContext(ctx, "I2C ReadValue Start")
 
-	value = I2CSennser{
+	value = I2CSenser{
 		Value: map[string]interface{}{},
 	}
 	readErr := func(inErr error) {
 		err = errors.Join(err, inErr)
 	}
-	for name, v := range i2cSennserType {
+	for name, v := range i2cSenserType {
 		switch name {
 		case "BME280":
 			if !v.flag {
@@ -140,7 +149,7 @@ func ReadValue(ctx context.Context) (value I2CSennser, err error) {
 				readErr(err)
 				continue
 			}
-			slog.Debug("I2C BME280 Read Value", "sennser", bme280.SENSER_NAME, "Temp", api.Tmp, "Hum", api.Hum, "Press", api.Press)
+			slog.Debug("I2C BME280 Read Value", "senser", bme280.SENSER_NAME, "Temp", api.Tmp, "Hum", api.Hum, "Press", api.Press)
 			value.Value[name] = Bme280Value{
 				Tmp:   api.Tmp,
 				Hum:   api.Hum,
@@ -151,7 +160,7 @@ func ReadValue(ctx context.Context) (value I2CSennser, err error) {
 	return
 }
 
-func (value *I2CSennser) ReadBME280_value() Bme280Value {
+func (value *I2CSenser) ReadBME280_value() Bme280Value {
 	bme280Value, ok := value.Value["BME280"].(Bme280Value)
 	if !ok {
 		slog.Warn("I2C BME280 Value Type Error")

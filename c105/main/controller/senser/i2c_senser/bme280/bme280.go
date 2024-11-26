@@ -3,7 +3,7 @@ package bme280
 import (
 	"context"
 	"log/slog"
-	"senseregent/controller/sennser/i2c_sennser/common"
+	"senseregent/controller/senser/i2c_senser/common"
 )
 
 const (
@@ -104,10 +104,9 @@ type Bme280_Vaule struct {
 }
 
 type bme280_cal struct {
-	press    []int
-	temp     []int
-	hum      []int
-	timefine float64
+	press []int
+	temp  []int
+	hum   []int
 }
 
 func ctrlMeasReg_set(v ...interface{}) byte {
