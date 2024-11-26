@@ -1,6 +1,6 @@
 TAG = 0.0.1
 DOCKER = docker
-NAME = sennser-egent
+NAME = senser-egent
 
 TEMPLATE = ./Dockerfile_tmp
 TARGET = ./Dockerfile
